@@ -16,6 +16,7 @@
 
 
 #include <linux/types.h>
+#include "al_codec.h"
 
 u32 get_l2_color_bitdepth(void *parent)
 {
@@ -37,6 +38,10 @@ u32 get_num_cores(void *parent)
 
 u32 get_core_frequency(void *parent)
 {
-	(void)parent;
+	struct al5_codec_desc *codec = (struct al5_codec_desc *)parent;
+
+	if (codec && codec->vdu_core_clk)
+		return codec->vdu_core_clk;
+
 	return -1;
 }

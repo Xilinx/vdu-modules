@@ -197,7 +197,8 @@ u32 get_core_frequency(void *);
 
 static void set_l2_info(struct device *dev, struct mcu_init_msg *init_msg)
 {
-	void *parent = dev_get_drvdata(dev->parent);
+	/* drvdata is codec ptr. There is no parent here */
+	void *parent = dev_get_drvdata(dev);
 
 	if (!IS_ERR(parent)) {
 		init_msg->l2_size_in_bits = get_l2_size_in_bits(parent);
@@ -429,7 +430,7 @@ int al5_codec_set_up(struct al5_codec_desc *codec, struct platform_device *pdev,
 		     size_t max_users_nb)
 {
 	int err, irq;
-	struct device_node *mem_node;
+	struct device_node *mem_node, *pnode;
 	struct resource mem_res;
 	struct resource *res;
 	const char *device_name = dev_name(&pdev->dev);
@@ -464,6 +465,25 @@ int al5_codec_set_up(struct al5_codec_desc *codec, struct platform_device *pdev,
 		dev_err(&pdev->dev, "Can't map registers");
 		err = PTR_ERR(codec->regs);
 		goto fail;
+	}
+
+	/* get core clock */
+	pnode = of_parse_phandle(pdev->dev.of_node, "xlnx,vdu", 0);
+	codec->vdu_core_clk = 0;
+	if (!pnode) {
+		dev_info(&pdev->dev, "No parent vdu node found!\n");
+	} else {
+
+		err= of_property_read_u32(pnode, "xlnx,core_clk",
+					  &codec->vdu_core_clk);
+		of_node_put(pnode);
+		if (err < 0) {
+			dev_info(&pdev->dev, "No core clk in MHz found\n");
+		}
+
+		codec->vdu_core_clk *= 1000000; /* MHz */
+		dev_info(&pdev->dev, "core clock parsed = %u MHz\n",
+			 codec->vdu_core_clk);
 	}
 
 	mem_node = of_parse_phandle(pdev->dev.of_node, "memory-region", 0);

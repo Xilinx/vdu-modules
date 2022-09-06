@@ -74,6 +74,7 @@ struct al5_codec_desc {
 	struct clk *mcu_clk;
 	struct regmap *logicore_reg_ba;
 #endif
+	u32 vdu_core_clk;
 };
 
 struct al5_filp_data {
