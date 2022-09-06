@@ -436,6 +436,7 @@ int al5_codec_set_up(struct al5_codec_desc *codec, struct platform_device *pdev,
 	const char *device_name = dev_name(&pdev->dev);
 	struct mcu_mailbox_config config;
 	struct mcu_mailbox_interface *mcu;
+	unsigned long pgtable_padding;
 
 	codec->device = &pdev->dev;
 
