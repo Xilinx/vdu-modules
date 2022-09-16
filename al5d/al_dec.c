@@ -276,6 +276,8 @@ static int al5d_codec_probe(struct platform_device *pdev)
 	codec->minor = current_minor;
 	++current_minor;
 
+	al5_info("al5d probe successful\n");
+
 	return 0;
 }
 

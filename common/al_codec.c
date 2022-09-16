@@ -250,8 +250,6 @@ static int init_mcu(struct al5_codec_desc *codec, struct al5_user *root,
 	init_msg.addr_p = codec->suballoc_buf->dma_handle & 0x00000000FFFFFFFF;
 	init_msg.size = codec->suballoc_buf->size;
 	set_l2_info(codec->device, &init_msg);
-	al5_info("l2 prefetch size:%d (bits), l2 color bitdepth:%d\n",
-		 init_msg.l2_size_in_bits, init_msg.l2_color_bitdepth);
 	init_msg.plugin_enabled = plugin_enabled;
 
 	err = al5_check_and_send(root, create_init_msg(root->uid, &init_msg));
