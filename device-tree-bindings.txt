@@ -1,11 +1,50 @@
-al5e, al5d:
+vdu: VDU base node for all instance nodes
+---------------------------------------
 
-al,mcu_ext_mem_size: specifies the size of the external memory of the mcu. default is MCU_SUBALLOCATOR_SIZE
+Required properties:
+ - compatible: should be "xlnx,vdu-1.0"
+ - xlnx,core_clk: core clock, max freq is 800MHz
+ - xlnx,mcu_clk: MCU clock, max freq is 571MHz
+ - xlnx,enable_dpll: generate core clock and MCU clock
+ - xlnx,ref_clk: reference clock input
+ - reset-gpios: gpio used as VDU reset line
 
-memory-region: a phandle that points to a reserved-memory node. The driver will use the reserved memory instead of using the CMA pools to allocate its memory. It will also configure the hw ip if needed so that the ip can access the allocated memory. (See https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841683/Linux+Reserved+Memory for more information)
+Example:
+       myvdu: vdu@a4000000 {
+              compatible = "xlnx,vdu-1.0";
+              xlnx,core_clk = <800>;
+              xlnx,mcu_clk = <571>;
+              xlnx,enable_dpll;
+              xlnx,ref_clk = <100>;
+              reset-gpios = <0x12 0x1a 0x01>;
+       };
 
-al,devicename: specifies the /dev/X name the created device should have. default is /dev/allegroIP for al5e and /dev/allegroDecodeIP for al5d
 
-al5r:
+al5d: VDU instance node
+---------------------------------------
 
-al,devicename: specifies the /dev/X name the created device should have. default is that the /dev/X node isn't created
+Required properties:
+ - compatible: should be "al,al5d"
+ - interrupt-names: interrupt names for the interrupt
+ - interrupt-parent: phandle to interrupt controller
+ - interrupts: interrupt number to the interrupt controller
+ - reg: base address and size of the VDU instance
+ - memory-region: phandle to the reserved-memory node. The VDU instance will
+                  use the reserved memory instead of using the CMA pools to
+		  allocate its memory
+ - al,devicename: specifies the /dev/X name for the VDU instance
+ - xlnx,vdu: phandle to the base node of the VDU instance
+
+
+Example:
+       al5d@a4020000 {
+              compatible = "al,al5d";
+              interrupt-names = "vdu_host_interrupt0";
+              interrupt-parent = <0x5>;
+              interrupts = <0x0 0x54 0x4>;
+              reg = <0x0 0xa4020000 0x0 0x100000>;
+              memory-region = <&ddr1_1>;
+              al,devicename = "allegroDecodeIP0";
+              xlnx,vdu = <&myvdu>;
+       };
+
