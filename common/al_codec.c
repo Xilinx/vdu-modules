@@ -20,6 +20,7 @@
 #include <linux/delay.h>
 #include <linux/of_address.h>
 #include <linux/of_reserved_mem.h>
+#include <linux/of_platform.h>
 #include <linux/of.h>
 #include <linux/version.h>
 
@@ -474,6 +475,15 @@ int al5_codec_set_up(struct al5_codec_desc *codec, struct platform_device *pdev,
 	if (!pnode) {
 		dev_info(&pdev->dev, "No parent vdu node found!\n");
 	} else {
+
+		struct platform_device *pdev = of_find_device_by_node(pnode);
+
+		if (!pdev || !(platform_get_drvdata(pdev))) {
+			dev_err(&pdev->dev, "Defer probe - No platform data associated with xlnx,vdu node\n");
+			err = -EPROBE_DEFER;
+			of_node_put(pnode);
+			goto fail;
+		}
 
 		err= of_property_read_u32(pnode, "xlnx,core_clk",
 					  &codec->vdu_core_clk);

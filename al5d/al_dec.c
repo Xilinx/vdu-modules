@@ -29,6 +29,7 @@
 #include <linux/fcntl.h>
 #include <linux/firmware.h>
 #include <linux/fs.h>
+#include <linux/gpio/consumer.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
@@ -72,6 +73,11 @@ int max_users_nb = MAX_USERS_NB;
 static int al5d_codec_major;
 static int al5d_codec_nr_devs = AL5_NR_DEVS;
 static struct class *module_class;
+
+struct al5d_data {
+	struct platform_device *pdev;
+	struct gpio_desc *rst_gpio;
+};
 
 static int ioctl_usage(struct al5_user *user, unsigned int cmd)
 {
@@ -292,13 +298,80 @@ static const struct of_device_id al5d_codec_of_match[] = {
 
 MODULE_DEVICE_TABLE(of, al5d_codec_of_match);
 
-static struct platform_driver al5d_platform_driver = {
+static struct platform_driver al5d_codec_platform_driver = {
 	.probe			= al5d_codec_probe,
 	.remove			= al5d_codec_remove,
 	.driver			=       {
-		.name		= "al5d",
+		.name		= "al5d_codec",
 		.of_match_table = of_match_ptr(al5d_codec_of_match),
 	},
+};
+
+
+static int al5d_probe(struct platform_device *pdev) {
+	struct al5d_data *pdata;
+	int ret = 0;
+
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return -ENOMEM;
+
+	pdata->rst_gpio = devm_gpiod_get(&pdev->dev, "reset", GPIOD_OUT_HIGH);
+	if (IS_ERR(pdata->rst_gpio)) {
+
+		ret = PTR_ERR(pdata->rst_gpio);
+		if (ret == -EPROBE_DEFER)
+			dev_info(&pdev->dev, "Probe deferred due to GPIO reset defer\n");
+		else
+			dev_err(&pdev->dev, "Unable to get reset-gpios property in dt ret - %d\n", ret);
+
+		return ret;
+	}
+
+	/* Reset VDU core */
+	gpiod_set_value_cansleep(pdata->rst_gpio, 1);
+	udelay(1);
+	gpiod_set_value_cansleep(pdata->rst_gpio, 0);
+
+	pdata->pdev = pdev;
+	platform_set_drvdata(pdev, pdata);
+
+	return ret;
+}
+
+static int al5d_remove(struct platform_device *pdev)
+{
+	struct al5d_data *pdata = platform_get_drvdata(pdev);
+
+	/* Reset VDU core */
+	gpiod_set_value_cansleep(pdata->rst_gpio, 1);
+	udelay(1);
+	gpiod_set_value_cansleep(pdata->rst_gpio, 0);
+
+	platform_set_drvdata(pdev, NULL);
+
+	return 0;
+}
+
+static const struct of_device_id al5d_of_match[] = {
+	{ .compatible = "xlnx,vdu-1.0" },
+	{ /* sentinel */ },
+};
+
+MODULE_DEVICE_TABLE(of, al5d_of_match);
+
+static struct platform_driver al5d_platform_driver = {
+	.probe			= al5d_probe,
+	.remove			= al5d_remove,
+	.driver			=       {
+		.name		= "xlnx-vdu",
+		.of_match_table = of_match_ptr(al5d_of_match),
+	},
+};
+
+static struct platform_driver * const al5d_platform_drivers[] = {
+	&al5d_platform_driver,
+	&al5d_codec_platform_driver,
 };
 
 static int setup_chrdev_region(void)
@@ -333,14 +406,16 @@ static int __init al5d_codec_init(void)
 	if (err)
 		return err;
 
-	return platform_driver_register(&al5d_platform_driver);
+	return platform_register_drivers(al5d_platform_drivers,
+					 ARRAY_SIZE(al5d_platform_drivers));
 }
 
 static void __exit al5d_codec_exit(void)
 {
 	dev_t devno = MKDEV(al5d_codec_major, 0);
 
-	platform_driver_unregister(&al5d_platform_driver);
+	platform_unregister_drivers(al5d_platform_drivers,
+				    ARRAY_SIZE(al5d_platform_drivers));
 	destroy_module_class();
 	unregister_chrdev_region(devno, al5d_codec_nr_devs);
 }
