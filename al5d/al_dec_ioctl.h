@@ -39,7 +39,6 @@ struct al5_params {
 };
 
 struct al5_channel_config {
-        __s32 instance_id;
 	struct al5_params param;
 	struct al5_channel_status status;
 };
@@ -56,7 +55,6 @@ struct al5_decode_msg {
 };
 
 struct al5_search_sc_msg {
-        __s32 instance_id;
 	struct al5_params param;
 	struct al5_params buffer_addrs;
 };
