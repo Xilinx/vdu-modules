@@ -73,7 +73,7 @@ void al5_group_unbind_user(struct al5_group *group, struct al5_user *user)
 {
 	mutex_lock(&group->lock);
         group->users[user->uid] = NULL;
-+	mutex_unlock(&group->lock);
+	mutex_unlock(&group->lock);
 }
 EXPORT_SYMBOL_GPL(al5_group_unbind_user);
 
