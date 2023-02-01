@@ -494,7 +494,7 @@ int al5_codec_set_up(struct al5_codec_desc *codec, struct platform_device *pdev,
 		}
 
 		codec->vdu_core_clk *= 1000000; /* MHz */
-		dev_info(&pdev->dev, "core clock parsed = %u MHz\n",
+		dev_info(&pdev->dev, "core clock parsed = %u Hz\n",
 			 codec->vdu_core_clk);
 	}
 
