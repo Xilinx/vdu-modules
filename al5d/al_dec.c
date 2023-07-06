@@ -331,7 +331,8 @@ static int al5d_probe(struct platform_device *pdev) {
 	if (!pdata)
 		return -ENOMEM;
 
-	pdata->rst_gpio = devm_gpiod_get(&pdev->dev, "reset", GPIOD_OUT_HIGH);
+	pdata->rst_gpio = devm_gpiod_get_optional(&pdev->dev, "reset",
+						  GPIOD_OUT_HIGH);
 	if (IS_ERR(pdata->rst_gpio)) {
 
 		ret = PTR_ERR(pdata->rst_gpio);
@@ -343,10 +344,14 @@ static int al5d_probe(struct platform_device *pdev) {
 		return ret;
 	}
 
-	/* Reset VDU core */
-	gpiod_set_value_cansleep(pdata->rst_gpio, 1);
-	udelay(1);
-	gpiod_set_value_cansleep(pdata->rst_gpio, 0);
+	if (pdata->rst_gpio) {
+		/* Reset VDU core */
+		gpiod_set_value_cansleep(pdata->rst_gpio, 1);
+		udelay(1);
+		gpiod_set_value_cansleep(pdata->rst_gpio, 0);
+	} else {
+		dev_dbg(&pdev->dev, "No reset gpio info from dts for vdu. This may lead to incorrect functionality if VDU IP is having vdu_reset connected to gpio.\n");
+	}
 
 	pdata->pdev = pdev;
 	platform_set_drvdata(pdev, pdata);
@@ -359,9 +364,11 @@ static int al5d_remove(struct platform_device *pdev)
 	struct al5d_data *pdata = platform_get_drvdata(pdev);
 
 	/* Reset VDU core */
-	gpiod_set_value_cansleep(pdata->rst_gpio, 1);
-	udelay(1);
-	gpiod_set_value_cansleep(pdata->rst_gpio, 0);
+	if (pdata->rst_gpio) {
+		gpiod_set_value_cansleep(pdata->rst_gpio, 1);
+		udelay(1);
+		gpiod_set_value_cansleep(pdata->rst_gpio, 0);
+	}
 
 	platform_set_drvdata(pdev, NULL);
 

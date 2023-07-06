@@ -7,7 +7,11 @@ Required properties:
  - xlnx,mcu_clk: MCU clock, max freq is 571MHz
  - xlnx,enable_dpll: generate core clock and MCU clock
  - xlnx,ref_clk: reference clock input
- - reset-gpios: gpio used as VDU reset line
+
+Optional properties:
+ - reset-gpios: The GPIO used to reset the VDU, if available. Need use this
+                reset gpio when in design 'vdu_reset' is driven by gpio. See
+                Documentation/devicetree/bindings/gpio/gpio.txt for details.
 
 Example:
        myvdu: vdu@a4000000 {
