@@ -377,6 +377,7 @@ static int al5d_remove(struct platform_device *pdev)
 
 static const struct of_device_id al5d_of_match[] = {
 	{ .compatible = "xlnx,vdu-1.0" },
+	{ .compatible = "xlnx,vdu-2.0" },
 	{ /* sentinel */ },
 };
 

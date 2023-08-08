@@ -2,10 +2,13 @@ vdu: VDU base node for all instance nodes
 ---------------------------------------
 
 Required properties:
- - compatible: should be "xlnx,vdu-1.0"
+ - compatible: should be "xlnx,vdu-1.0" or "xlnx,vdu-2.0"
+  "xlnx,vdu-1.0": This is for initial IP.
+  "xlnx,vdu-2.0": IP needs only 100 MHz ref clock for DPLL to generate
+                  MCU and CORE clock.
  - xlnx,core_clk: core clock, max freq is 800MHz
  - xlnx,mcu_clk: MCU clock, max freq is 571MHz
- - xlnx,enable_dpll: generate core clock and MCU clock
+ - xlnx,enable_dpll: generate core clock and MCU clock (for version 1.0 only)
  - xlnx,ref_clk: reference clock input
 
 Optional properties:
@@ -13,12 +16,21 @@ Optional properties:
                 reset gpio when in design 'vdu_reset' is driven by gpio. See
                 Documentation/devicetree/bindings/gpio/gpio.txt for details.
 
-Example:
+Example 1: For xlnx,vdu-1.0
        myvdu: vdu@a4000000 {
               compatible = "xlnx,vdu-1.0";
               xlnx,core_clk = <800>;
               xlnx,mcu_clk = <571>;
               xlnx,enable_dpll;
+              xlnx,ref_clk = <100>;
+              reset-gpios = <0x12 0x1a 0x01>;
+       };
+
+Example 2: For xlnx,vdu-2.0
+       myvdu: vdu@a4000000 {
+              compatible = "xlnx,vdu-2.0";
+              xlnx,core_clk = <800>;
+              xlnx,mcu_clk = <571>;
               xlnx,ref_clk = <100>;
               reset-gpios = <0x12 0x1a 0x01>;
        };
